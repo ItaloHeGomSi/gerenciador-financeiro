@@ -18,7 +18,7 @@
   --text:#111827;--muted:#6b7280;--muted2:#9ca3af;--light:#f3f4f6;
   --radius:10px;--radius-lg:14px;
 }
-body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden;font-size:14px}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;height:100vh;overflow:hidden;margin:0;padding:0}
 
 /* ── Sidebar ── */
 .sidebar{width:232px;background:var(--sidebar);display:flex;flex-direction:column;flex-shrink:0}
@@ -211,6 +211,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .empty{text-align:center;padding:40px 20px;color:var(--muted)}
 .empty-icon{font-size:36px;margin-bottom:12px;opacity:.5}
 .empty p{font-size:13px}
+#app-wrapper{display:none}
+#app-wrapper.open{display:flex;flex-direction:row;height:100vh;width:100%}
 @media(max-width:700px){
   .sidebar{width:60px}.sidebar-logo p,.nav-item span,.nav-section,.month-box{display:none}
   .nav-item{justify-content:center;padding:10px}.sidebar-footer{padding:8px}
@@ -220,6 +222,31 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 </style>
 </head>
 <body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen" style="display:flex;position:fixed;inset:0;background:#0f172a;z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#1e293b;border-radius:16px;padding:36px;width:100%;max-width:380px;border:1px solid rgba(255,255,255,.08)">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:32px;margin-bottom:8px">💰</div>
+      <div id="auth-title" style="font-size:20px;font-weight:700;color:#fff">Entrar na sua conta</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.4);margin-top:4px">Gerenciador Financeiro</div>
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:11px;font-weight:600;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">E-mail</label>
+      <input id="auth-email" type="email" placeholder="seu@email.com" onkeydown="if(event.key==='Enter')document.getElementById('auth-pass').focus()" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;font-size:14px;font-family:inherit;outline:none">
+    </div>
+    <div style="margin-bottom:18px">
+      <label style="display:block;font-size:11px;font-weight:600;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Senha</label>
+      <input id="auth-pass" type="password" placeholder="••••••" onkeydown="if(event.key==='Enter')submitAuth()" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;font-size:14px;font-family:inherit;outline:none">
+    </div>
+    <div id="auth-error" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:7px;padding:9px 12px;font-size:12px;color:#dc2626;margin-bottom:14px"></div>
+    <button id="auth-submit-btn" onclick="submitAuth()" style="width:100%;padding:11px;border-radius:8px;border:none;background:#10b981;color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">Entrar</button>
+    <div id="auth-switch-text" style="text-align:center;font-size:13px;color:rgba(255,255,255,.4);margin-top:16px">Não tem conta? <a href="#" onclick="switchAuthMode();return false" style="color:#10b981;font-weight:600">Criar conta</a></div>
+  </div>
+</div>
+
+<!-- APP WRAPPER -->
+<div id="app-wrapper">
 
 <!-- ═══ SIDEBAR ═══ -->
 <aside class="sidebar">
@@ -257,6 +284,13 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
     </div>
   </nav>
   <div class="sidebar-footer">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;background:rgba(255,255,255,.05);border-radius:8px;padding:8px 10px">
+      <div style="width:28px;height:28px;border-radius:50%;background:rgba(16,185,129,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px">👤</div>
+      <div style="flex:1;min-width:0"><div id="user-email-label" style="font-size:11px;color:rgba(255,255,255,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div></div>
+      <button onclick="doSignOut()" title="Sair" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,.3);padding:3px;border-radius:5px;display:flex" onmouseover="this.style.color='#f43f5e'" onmouseout="this.style.color='rgba(255,255,255,.3)'">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      </button>
+    </div>
     <div class="month-box">
       <div class="month-row">
         <button class="month-btn" onclick="changeMonth(-1)">
@@ -593,6 +627,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 </div>
 
 <div class="toast" id="toast"></div>
+</div><!-- /app-wrapper -->
 
 <!-- ═══ SCRIPT ═══ -->
 <script>
@@ -619,8 +654,8 @@ const fmt=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).fo
 const fmtDate=d=>{try{return new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});}catch(e){return d;}};
 const fmtFull=d=>{try{return new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});}catch(e){return d;}};
 
-function loadDB(){try{const d=localStorage.getItem('financeApp_v2');if(d)db=JSON.parse(d);}catch(e){}}
-function saveDB(){try{localStorage.setItem('financeApp_v2',JSON.stringify(db));}catch(e){}}
+function loadDB(){/* handled by Firebase listener */}
+function saveDB(){try{if(window._firebaseSaveDB){window._firebaseSaveDB();}else{localStorage.setItem('financeApp_v2',JSON.stringify(db));}}catch(e){}}
 function getApiKey(){return localStorage.getItem('financeApp_apiKey')||'';}
 
 // ─ Navigation ─
@@ -1116,10 +1151,142 @@ document.addEventListener('keydown',e=>{
 });
 
 // ─ Init ─
-loadDB();
 updateMonthUI();
-renderDashboard();
 </script>
+
+<!-- Firebase SDKs -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, browserSessionPersistence, setPersistence } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getDatabase, ref, set, get, onValue, off } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDnvesDEZamHcjmQ_YO96mypUvrAPtTEbs",
+  authDomain: "gerenciador-financeiro-f8531.firebaseapp.com",
+  databaseURL: "https://gerenciador-financeiro-f8531-default-rtdb.firebaseio.com",
+  projectId: "gerenciador-financeiro-f8531",
+  storageBucket: "gerenciador-financeiro-f8531.firebasestorage.app",
+  messagingSenderId: "40824250173",
+  appId: "1:40824250173:web:e4b67895cf8fec78f0ef54"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const database = getDatabase(fbApp);
+
+// Sessão expira ao fechar o navegador/aba
+setPersistence(auth, browserSessionPersistence);
+
+let currentUser = null;
+let dbListener = null;
+
+// ── Auth UI ──
+function showAuthScreen(){
+  document.getElementById('app-wrapper').classList.remove('open');
+  document.getElementById('auth-screen').style.display='flex';
+}
+function hideAuthScreen(){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app-wrapper').classList.add('open');
+}
+
+function setAuthError(msg){
+  const el=document.getElementById('auth-error');
+  el.textContent=msg; el.style.display=msg?'block':'none';
+}
+function setAuthLoading(on){
+  document.getElementById('auth-submit-btn').disabled=on;
+  document.getElementById('auth-submit-btn').textContent=on?'Aguarde...':(authMode==='login'?'Entrar':'Criar conta');
+}
+
+let authMode='login';
+window.switchAuthMode=function(){
+  authMode=authMode==='login'?'register':'login';
+  document.getElementById('auth-title').textContent=authMode==='login'?'Entrar na sua conta':'Criar conta';
+  document.getElementById('auth-submit-btn').textContent=authMode==='login'?'Entrar':'Criar conta';
+  document.getElementById('auth-switch-text').innerHTML=authMode==='login'
+    ?'Não tem conta? <a href="#" onclick="switchAuthMode();return false" style="color:#10b981;font-weight:600">Criar conta</a>'
+    :'Já tem conta? <a href="#" onclick="switchAuthMode();return false" style="color:#10b981;font-weight:600">Entrar</a>';
+  setAuthError('');
+}
+
+window.submitAuth=async function(){
+  const email=document.getElementById('auth-email').value.trim();
+  const pass=document.getElementById('auth-pass').value;
+  if(!email||!pass){setAuthError('Preencha e-mail e senha.');return;}
+  setAuthLoading(true); setAuthError('');
+  try{
+    if(authMode==='login'){
+      await signInWithEmailAndPassword(auth,email,pass);
+    } else {
+      if(pass.length<6){setAuthError('A senha deve ter pelo menos 6 caracteres.');setAuthLoading(false);return;}
+      await createUserWithEmailAndPassword(auth,email,pass);
+    }
+  } catch(e){
+    const msgs={
+      'auth/user-not-found':'E-mail não encontrado.',
+      'auth/wrong-password':'Senha incorreta.',
+      'auth/email-already-in-use':'Este e-mail já está cadastrado.',
+      'auth/invalid-email':'E-mail inválido.',
+      'auth/invalid-credential':'E-mail ou senha incorretos.',
+      'auth/too-many-requests':'Muitas tentativas. Tente novamente mais tarde.'
+    };
+    setAuthError(msgs[e.code]||'Erro: '+e.message);
+    setAuthLoading(false);
+  }
+}
+
+window.doSignOut=async function(){
+  if(dbListener){off(ref(database,'users/'+currentUser.uid));dbListener=null;}
+  await signOut(auth);
+  db={transactions:[],scheduled:[],paid:{}};
+  toast('Sessão encerrada.');
+}
+
+// ── Firebase DB ──
+async function saveDB(){
+  if(!currentUser) return;
+  try{
+    await set(ref(database,'users/'+currentUser.uid+'/data'), JSON.stringify(db));
+  } catch(e){ console.error('Erro ao salvar:',e); toast('Erro ao salvar dados.'); }
+}
+
+function loadDB(){
+  // No-op: loading is handled by onValue listener
+}
+
+function startDBListener(uid){
+  if(dbListener){off(ref(database,'users/'+uid));dbListener=null;}
+  const dbRef=ref(database,'users/'+uid+'/data');
+  dbListener=onValue(dbRef,(snap)=>{
+    if(snap.exists()){
+      try{ db=JSON.parse(snap.val()); } catch(e){ db={transactions:[],scheduled:[],paid:{}}; }
+    } else {
+      db={transactions:[],scheduled:[],paid:{}};
+    }
+    const ap=document.querySelector('.page.active');
+    if(ap) goPage(ap.id.replace('page-',''));
+    else renderDashboard();
+  });
+}
+
+// ── Auth state ──
+onAuthStateChanged(auth,(user)=>{
+  if(user){
+    currentUser=user;
+    document.getElementById('user-email-label').textContent=user.email;
+    hideAuthScreen();
+    startDBListener(user.uid);
+  } else {
+    currentUser=null;
+    showAuthScreen();
+  }
+});
+
+// expose saveDB globally so existing JS can call it
+window._firebaseSaveDB = saveDB;
+</script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </body>

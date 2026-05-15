@@ -371,14 +371,21 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
         </button>
       </div>
     </div>
+
+    <!-- Tab bar -->
+    <div style="display:flex;gap:2px;background:var(--light);border-radius:10px;padding:4px;margin-bottom:18px">
+      <button id="tx-tab-all"    onclick="setTxTab('all')"    style="flex:1;padding:8px 12px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;transition:all .15s;background:#10b981;color:#fff">Todas</button>
+      <button id="tx-tab-income" onclick="setTxTab('income')" style="flex:1;padding:8px 12px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;transition:all .15s;background:transparent;color:var(--muted)">Receitas</button>
+      <button id="tx-tab-debit"  onclick="setTxTab('debit')"  style="flex:1;padding:8px 12px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;transition:all .15s;background:transparent;color:var(--muted)">Débito</button>
+      <button id="tx-tab-credit" onclick="setTxTab('credit')" style="flex:1;padding:8px 12px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;transition:all .15s;background:transparent;color:var(--muted)">Crédito</button>
+    </div>
+
+    <!-- Tab summary cards -->
+    <div id="tx-tab-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px"></div>
+
+    <!-- Filters -->
     <div class="filters">
       <input class="filter-input" type="text" id="tx-search" placeholder="🔍  Buscar..." oninput="renderTxList()">
-      <select class="filter-select" id="tx-filter-type" onchange="renderTxList()">
-        <option value="">Todos os tipos</option><option value="income">Receitas</option><option value="expense">Despesas</option>
-      </select>
-      <select class="filter-select" id="tx-filter-pay" onchange="renderTxList()">
-        <option value="">Débito + Crédito</option><option value="debit">Só Débito</option><option value="credit">Só Crédito</option>
-      </select>
       <select class="filter-select" id="tx-filter-cat" onchange="renderTxList()"><option value="">Todas categorias</option></select>
     </div>
     <div id="tx-list-container"></div>
@@ -642,7 +649,7 @@ const CAT_COLORS=['#10b981','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#
 // ─ State ─
 let db={transactions:[],scheduled:[],paid:{}};
 let currentMonth=new Date().toISOString().slice(0,7);
-let editingTxId=null, txType='income', payMode='debit', confirmCb=null;
+let editingTxId=null, txType='income', payMode='debit', txTab='all', confirmCb=null;
 let barChart=null, donutChart=null;
 let boletoFile=null, boletoScanned=false;
 
@@ -724,26 +731,103 @@ function renderDashboard(){
     :upcoming.map(s=>{const late=s.dueDay<today;return`<div class="upc-item"><div class="upc-left"><div class="upc-day" style="${late?'background:#ffe4e6;color:var(--expense)':''}">${s.dueDay}</div><div class="upc-info"><div class="name">${s.description}</div><div class="cat">${s.category}${late?'·<span style="color:var(--expense)">vencido</span>':''}</div></div></div><div class="upc-amt">${fmt(s.amount)}</div></div>`;}).join('');
 }
 
+// ─ Transactions tab ─
+function setTxTab(tab){
+  txTab=tab;
+  const tabs={all:'#10b981',income:'#10b981',debit:'#d97706',credit:'#7c3aed'};
+  ['all','income','debit','credit'].forEach(t=>{
+    const btn=document.getElementById('tx-tab-'+t);
+    if(t===tab){btn.style.background=tabs[t];btn.style.color='#fff';}
+    else{btn.style.background='transparent';btn.style.color='var(--muted)';}
+  });
+  renderTxList();
+}
+
 // ─ Transactions ─
 function renderTxList(){
   const [y,m]=currentMonth.split('-');
   document.getElementById('tx-period').textContent=MONTHS[parseInt(m)-1]+' '+y;
   const search=document.getElementById('tx-search').value.toLowerCase();
-  const fType=document.getElementById('tx-filter-type').value;
-  const fPay=document.getElementById('tx-filter-pay').value;
   const fCat=document.getElementById('tx-filter-cat').value;
-  const cats=[...new Set(db.transactions.filter(t=>t.month===currentMonth).map(t=>t.category))].sort();
+
+  // Populate categories based on active tab
+  const allMonthTxs=db.transactions.filter(t=>t.month===currentMonth);
+  const cats=[...new Set(allMonthTxs.map(t=>t.category))].sort();
   const sel=document.getElementById('tx-filter-cat');
   const prev=sel.value;
   sel.innerHTML='<option value="">Todas categorias</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
   sel.value=prev;
-  let txs=db.transactions.filter(t=>t.month===currentMonth);
-  if(fType) txs=txs.filter(t=>t.type===fType);
-  if(fPay==='debit') txs=txs.filter(t=>t.type==='income'||t.paymentMode!=='credit');
-  if(fPay==='credit') txs=txs.filter(t=>t.paymentMode==='credit');
+
+  // Summary cards per tab
+  const income=allMonthTxs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const debit=allMonthTxs.filter(t=>t.type==='expense'&&t.paymentMode!=='credit').reduce((s,t)=>s+t.amount,0);
+  const credit=allMonthTxs.filter(t=>t.type==='expense'&&t.paymentMode==='credit').reduce((s,t)=>s+t.amount,0);
+  const summaryEl=document.getElementById('tx-tab-summary');
+  if(txTab==='all'){
+    summaryEl.style.display='grid';
+    summaryEl.innerHTML=`
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px">
+        <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Receitas</div>
+        <div style="font-size:18px;font-weight:700;color:var(--income)">${fmt(income)}</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px">
+        <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Débito</div>
+        <div style="font-size:18px;font-weight:700;color:#d97706">${fmt(debit)}</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px">
+        <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Crédito</div>
+        <div style="font-size:18px;font-weight:700;color:#7c3aed">${fmt(credit)}</div>
+      </div>`;
+  } else if(txTab==='income'){
+    summaryEl.style.display='grid';
+    summaryEl.style.gridTemplateColumns='repeat(2,1fr)';
+    const incTxs=allMonthTxs.filter(t=>t.type==='income');
+    summaryEl.innerHTML=`
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px">
+        <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Total recebido</div>
+        <div style="font-size:18px;font-weight:700;color:var(--income)">${fmt(income)}</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px">
+        <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Lançamentos</div>
+        <div style="font-size:18px;font-weight:700;color:var(--text)">${incTxs.length}</div>
+      </div>`;
+  } else if(txTab==='debit'){
+    summaryEl.style.display='grid';
+    summaryEl.style.gridTemplateColumns='repeat(2,1fr)';
+    const debTxs=allMonthTxs.filter(t=>t.type==='expense'&&t.paymentMode!=='credit');
+    summaryEl.innerHTML=`
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px">
+        <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Total débito</div>
+        <div style="font-size:18px;font-weight:700;color:#d97706">${fmt(debit)}</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px">
+        <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Lançamentos</div>
+        <div style="font-size:18px;font-weight:700;color:var(--text)">${debTxs.length}</div>
+      </div>`;
+  } else if(txTab==='credit'){
+    summaryEl.style.display='grid';
+    summaryEl.style.gridTemplateColumns='repeat(2,1fr)';
+    const credTxs=allMonthTxs.filter(t=>t.type==='expense'&&t.paymentMode==='credit');
+    summaryEl.innerHTML=`
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px">
+        <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Total crédito</div>
+        <div style="font-size:18px;font-weight:700;color:#7c3aed">${fmt(credit)}</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px">
+        <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Lançamentos</div>
+        <div style="font-size:18px;font-weight:700;color:var(--text)">${allMonthTxs.filter(t=>t.type==='expense'&&t.paymentMode==='credit').length}</div>
+      </div>`;
+  }
+
+  // Filter transactions by tab
+  let txs=allMonthTxs;
+  if(txTab==='income') txs=txs.filter(t=>t.type==='income');
+  else if(txTab==='debit') txs=txs.filter(t=>t.type==='expense'&&t.paymentMode!=='credit');
+  else if(txTab==='credit') txs=txs.filter(t=>t.type==='expense'&&t.paymentMode==='credit');
   if(fCat) txs=txs.filter(t=>t.category===fCat);
   if(search) txs=txs.filter(t=>t.description.toLowerCase().includes(search)||t.category.toLowerCase().includes(search));
   txs.sort((a,b)=>b.date.localeCompare(a.date));
+
   const c=document.getElementById('tx-list-container');
   if(!txs.length){c.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>Nenhuma transação encontrada</p></div>';return;}
   c.innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:12px">${txs.length} lançamento${txs.length!==1?'s':''}</div>`

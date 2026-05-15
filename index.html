@@ -76,7 +76,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .btn-boleto{background:#6366f1;color:#fff}
 .btn-boleto:hover{background:#4f46e5}
 .btn-sm{padding:5px 12px;font-size:12px}
-.btn-xs{padding:3px 9px;font-size:11px;font-weight:500}
+.btn-xs{padding:4px 10px;font-size:11px;font-weight:600;border-radius:6px;border:none;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;transition:all .15s}
 .btn-paid{background:var(--income-bg);color:var(--income-text);border:1px solid #a7f3d0}
 .btn-pay{background:var(--light);color:var(--text);border:1px solid var(--border2)}
 .btn-pay:hover{background:var(--accent-light);color:var(--income-text);border-color:var(--accent)}
@@ -272,6 +272,11 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
       <span>Relatórios</span>
     </div>
+    <div class="nav-item" onclick="goPage('calendar')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      <span>Calendário</span>
+      <span class="badge-dot" id="cal-nav-dot" style="display:none"></span>
+    </div>
     <div class="nav-section">Ferramentas</div>
     <div class="nav-item" onclick="openBoletoScanner()" style="color:#a5b4fc">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h1v12H4zm2 0h1v12H6zm3 0h2v12H9zm3 0h1v12h-1zm2 0h1v12h-1zm2 0h2v12h-2z"/></svg>
@@ -450,6 +455,49 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
       </div>
     </div>
   </section>
+
+  <!-- Calendar -->
+  <section class="page" id="page-calendar">
+    <div class="page-header">
+      <div><div class="page-title">Calendário</div><div class="page-sub">Vencimentos e pagamentos agendados</div></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div id="cal-notif-badge" style="display:none;background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;color:#92400e"></div>
+      </div>
+    </div>
+    <!-- Calendar nav -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <button class="btn btn-outline btn-sm" onclick="calChangeMonth(-1)">‹</button>
+      <div id="cal-month-label" style="font-size:15px;font-weight:700;min-width:160px;text-align:center;color:var(--text)"></div>
+      <button class="btn btn-outline btn-sm" onclick="calChangeMonth(1)">›</button>
+      <button class="btn btn-outline btn-sm" onclick="calGoToday()" style="margin-left:4px">Hoje</button>
+    </div>
+    <!-- Calendar grid -->
+    <div class="card" style="overflow:hidden">
+      <!-- Day headers -->
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border)">
+        <div style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:var(--muted)">Dom</div>
+        <div style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:var(--muted)">Seg</div>
+        <div style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:var(--muted)">Ter</div>
+        <div style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:var(--muted)">Qua</div>
+        <div style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:var(--muted)">Qui</div>
+        <div style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:var(--muted)">Sex</div>
+        <div style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:var(--muted)">Sáb</div>
+      </div>
+      <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr)"></div>
+    </div>
+    <!-- Legend -->
+    <div style="display:flex;gap:16px;margin-top:14px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><span style="width:10px;height:10px;border-radius:50%;background:#f43f5e;display:inline-block"></span>Vencimento pendente</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><span style="width:10px;height:10px;border-radius:50%;background:#10b981;display:inline-block"></span>Pago</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block"></span>Vence em breve (≤3 dias)</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><span style="width:10px;height:10px;border-radius:2px;background:var(--accent-light);border:1.5px solid var(--accent);display:inline-block"></span>Hoje</div>
+    </div>
+    <!-- Upcoming list -->
+    <div style="margin-top:24px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:12px">Próximos vencimentos</div>
+      <div id="cal-upcoming-list"></div>
+    </div>
+  </section>
 </main>
 
 <!-- ═══ MODAL: BOLETO SCANNER ═══ -->
@@ -601,19 +649,48 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
       <span class="modal-title">⚙️ Configurações</span>
       <button class="modal-close" onclick="closeSettings()"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
     </div>
+
+    <!-- Email notifications -->
     <div class="settings-section">
-      <div class="settings-title">🤖 Chave de API — Anthropic</div>
-      <div class="settings-sub">Necessária para escanear boletos com IA. A chave é salva <strong>somente no seu navegador</strong> e nunca é enviada a nenhum servidor além da Anthropic.<br><br>
-      <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:#6366f1;font-weight:600">Obter sua chave em console.anthropic.com →</a></div>
-      <label class="form-label">Chave de API</label>
-      <input class="form-input" type="password" id="api-key-input" placeholder="sk-ant-...">
-      <div id="key-status" class="key-status"></div>
+      <div class="settings-title">📧 Notificações por e-mail</div>
+      <div class="settings-sub">Configure para receber alertas automáticos quando um pagamento estiver próximo do vencimento. Os e-mails são enviados ao abrir o site quando faltam 7, 3, 1 ou 0 dias para vencer.</div>
+      <div class="form-group">
+        <label class="form-label">E-mail para notificações</label>
+        <input class="form-input" type="email" id="settings-notify-email" placeholder="seu@email.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Avisar com quantos dias de antecedência</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px" id="settings-days-checkboxes">
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer"><input type="checkbox" id="notify-d7" value="7"> 7 dias antes</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer"><input type="checkbox" id="notify-d3" value="3"> 3 dias antes</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer"><input type="checkbox" id="notify-d1" value="1"> 1 dia antes</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer"><input type="checkbox" id="notify-d0" value="0"> No dia do vencimento</label>
+        </div>
+      </div>
+      <div id="settings-email-status" style="display:none;margin-top:4px"></div>
+      <button class="btn btn-outline btn-sm" onclick="testNotificationEmail()" style="margin-top:8px;display:flex;align-items:center;gap:6px">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        Enviar e-mail de teste
+      </button>
     </div>
+
+    <!-- Account -->
     <div class="settings-section">
-      <div class="settings-title">🗑️ Dados</div>
-      <div class="settings-sub">Apaga todos os lançamentos, agendamentos e configurações salvos no navegador.</div>
+      <div class="settings-title">👤 Conta</div>
+      <div class="settings-sub" id="settings-account-info" style="margin-bottom:10px"></div>
+      <button class="btn btn-outline btn-sm" onclick="doSignOut();closeSettings();" style="display:flex;align-items:center;gap:6px">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        Sair da conta
+      </button>
+    </div>
+
+    <!-- Danger zone -->
+    <div class="settings-section">
+      <div class="settings-title" style="color:var(--expense)">🗑️ Zona de perigo</div>
+      <div class="settings-sub">Apaga permanentemente todos os lançamentos, agendamentos e configurações. Esta ação não pode ser desfeita.</div>
       <button class="btn btn-outline btn-sm" onclick="clearAllData()" style="color:var(--expense);border-color:#fecaca">Apagar todos os dados</button>
     </div>
+
     <div class="form-actions">
       <button class="btn btn-outline" onclick="closeSettings()">Cancelar</button>
       <button class="btn btn-primary" onclick="saveSettings()">Salvar configurações</button>
@@ -629,6 +706,49 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
     <div class="confirm-actions">
       <button class="btn btn-outline btn-sm" onclick="closeConfirm()">Cancelar</button>
       <button class="btn btn-sm" id="confirm-btn" style="background:#ef4444;color:#fff">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cal Day Modal -->
+<div class="overlay" id="cal-day-overlay">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <span class="modal-title" id="cal-day-title">Dia 01</span>
+      <button class="modal-close" onclick="closeCalDay()">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="cal-day-body"></div>
+    <!-- Edit form (hidden by default) -->
+    <div id="cal-day-edit-form" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--text)" id="cal-edit-form-title">Editar agendamento</div>
+      <div class="form-grid-2">
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Descrição</label>
+          <input class="form-input" type="text" id="cal-edit-desc">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Valor (R$)</label>
+          <input class="form-input" type="number" id="cal-edit-val" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dia do vencimento</label>
+          <input class="form-input" type="number" id="cal-edit-day" min="1" max="31">
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Categoria</label>
+          <select class="form-select" id="cal-edit-cat">
+            <option>Moradia</option><option>Alimentação</option><option>Transporte</option>
+            <option>Saúde</option><option>Educação</option><option>Contas</option>
+            <option>Lazer</option><option>Assinatura</option><option>Vestuário</option><option>Outros</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+        <button class="btn btn-outline btn-sm" onclick="cancelCalEdit()">Cancelar</button>
+        <button class="btn btn-primary btn-sm" onclick="saveCalEdit()">Salvar alterações</button>
+      </div>
     </div>
   </div>
 </div>
@@ -670,19 +790,21 @@ function goPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
-  const map={dashboard:0,transactions:1,scheduled:2,reports:3};
+  const map={dashboard:0,transactions:1,scheduled:2,reports:3,calendar:4};
   const navItems=document.querySelectorAll('.nav-item');
   if(map[id]!==undefined) navItems[map[id]].classList.add('active');
   if(id==='dashboard') renderDashboard();
   if(id==='transactions') renderTxList();
   if(id==='scheduled') renderSchedList();
   if(id==='reports') renderReports();
+  if(id==='calendar') renderCalendar();
 }
 
 function changeMonth(d){
   let [y,m]=currentMonth.split('-').map(Number);
   m+=d; if(m<1){m=12;y--;} if(m>12){m=1;y++;}
   currentMonth=y+'-'+String(m).padStart(2,'0');
+  calMonth=currentMonth;
   updateMonthUI();
   const ap=document.querySelector('.page.active');
   if(ap) goPage(ap.id.replace('page-',''));
@@ -962,23 +1084,67 @@ function saveSched(){
 
 // ─ Settings ─
 function openSettings(){
-  const k=getApiKey();
-  document.getElementById('api-key-input').value=k;
-  const ks=document.getElementById('key-status');
-  ks.innerHTML=k?`<div class="dot-green"></div><span style="color:#059669;font-weight:500">Chave configurada (${k.slice(0,10)}...)</span>`:`<div class="dot-red"></div><span style="color:#dc2626">Chave não configurada</span>`;
+  // Load saved email prefs
+  const prefs=JSON.parse(localStorage.getItem('finNotifPrefs')||'{}');
+  document.getElementById('settings-notify-email').value=prefs.email||NOTIFY_EMAIL||'';
+  document.getElementById('notify-d7').checked=prefs.days===undefined?true:prefs.days.includes(7);
+  document.getElementById('notify-d3').checked=prefs.days===undefined?true:prefs.days.includes(3);
+  document.getElementById('notify-d1').checked=prefs.days===undefined?true:prefs.days.includes(1);
+  document.getElementById('notify-d0').checked=prefs.days===undefined?true:prefs.days.includes(0);
+  // Show account info
+  const accEl=document.getElementById('settings-account-info');
+  if(accEl) accEl.textContent='Logado como: '+(window._currentUserEmail||'—');
+  document.getElementById('settings-email-status').style.display='none';
   document.getElementById('settings-overlay').classList.add('open');
 }
 function closeSettings(){document.getElementById('settings-overlay').classList.remove('open');}
 function saveSettings(){
-  const k=document.getElementById('api-key-input').value.trim();
-  if(k) localStorage.setItem('financeApp_apiKey',k); else localStorage.removeItem('financeApp_apiKey');
-  document.getElementById('settings-dot').style.display=k?'none':'';
-  closeSettings();toast('Configurações salvas!');
+  const email=document.getElementById('settings-notify-email').value.trim();
+  const days=[];
+  if(document.getElementById('notify-d7').checked) days.push(7);
+  if(document.getElementById('notify-d3').checked) days.push(3);
+  if(document.getElementById('notify-d1').checked) days.push(1);
+  if(document.getElementById('notify-d0').checked) days.push(0);
+  localStorage.setItem('finNotifPrefs', JSON.stringify({email, days}));
+  closeSettings();
+  toast('Configurações salvas!');
+}
+function getNotifPrefs(){
+  const prefs=JSON.parse(localStorage.getItem('finNotifPrefs')||'{}');
+  return {
+    email: prefs.email||NOTIFY_EMAIL,
+    days: prefs.days||[7,3,1,0]
+  };
+}
+function testNotificationEmail(){
+  const email=document.getElementById('settings-notify-email').value.trim()||NOTIFY_EMAIL;
+  const statusEl=document.getElementById('settings-email-status');
+  statusEl.style.display='block';
+  statusEl.innerHTML='<span style="color:var(--muted);font-size:12px">⏳ Enviando e-mail de teste...</span>';
+  if(!window.emailjs){
+    statusEl.innerHTML='<span style="color:var(--expense);font-size:12px">❌ EmailJS não carregado. Tente pelo GitHub Pages.</span>';
+    return;
+  }
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    to_email: email,
+    boleto_nome: 'Teste de Notificação',
+    valor: 'R$ 150,00',
+    data_vencimento: new Date().toLocaleDateString('pt-BR'),
+    dias_restantes: '3',
+    dias_label: 'em 3 dias',
+    categoria: 'Contas',
+    reply_to: email
+  }).then(()=>{
+    statusEl.innerHTML=`<span style="color:#059669;font-size:12px">✅ E-mail enviado para <strong>${email}</strong>! Verifique sua caixa de entrada.</span>`;
+  }).catch(e=>{
+    statusEl.innerHTML=`<span style="color:var(--expense);font-size:12px">❌ Erro: ${e.text||e.message||JSON.stringify(e)}</span>`;
+  });
 }
 function clearAllData(){
   if(confirm('Apagar TODOS os dados? Esta ação é irreversível.')){
     db={transactions:[],scheduled:[],paid:{}};saveDB();
-    localStorage.removeItem('financeApp_apiKey');
+    localStorage.removeItem('finNotifPrefs');
+    localStorage.removeItem(NOTIF_STORAGE_KEY);
     closeSettings();goPage('dashboard');toast('Dados apagados.');
   }
 }
@@ -1227,9 +1393,332 @@ function exportCSV(){
 // ─ Toast ─
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
 
+// ─ Calendar ─
+let calMonth = currentMonth;
+
+function calChangeMonth(d){
+  let [y,m]=calMonth.split('-').map(Number);
+  m+=d; if(m<1){m=12;y--;} if(m>12){m=1;y++;}
+  calMonth=y+'-'+String(m).padStart(2,'0');
+  renderCalendar();
+}
+function calGoToday(){
+  calMonth=new Date().toISOString().slice(0,7);
+  renderCalendar();
+}
+
+function renderCalendar(){
+  const [y,m]=calMonth.split('-').map(Number);
+  document.getElementById('cal-month-label').textContent=MONTHS[m-1]+' '+y;
+  const today=new Date();
+  const todayStr=today.toISOString().slice(0,10);
+  const firstDay=new Date(y,m-1,1).getDay();
+  const daysInMonth=new Date(y,m,0).getDate();
+
+  // Build map: day -> scheduled items
+  const dayMap={};
+  db.scheduled.forEach(s=>{
+    const day=s.dueDay;
+    if(day>=1&&day<=daysInMonth){
+      if(!dayMap[day]) dayMap[day]=[];
+      const ym=calMonth;
+      const paid=!!db.paid[ym+':'+s.id];
+      dayMap[day].push({...s,paid});
+    }
+  });
+
+  // Also add actual transactions that fall in this month
+  const txMap={};
+  db.transactions.filter(t=>t.month===calMonth&&t.type==='expense').forEach(t=>{
+    const d=parseInt(t.date.split('-')[2]);
+    if(!txMap[d]) txMap[d]=[];
+    txMap[d].push(t);
+  });
+
+  const grid=document.getElementById('cal-grid');
+  let html='';
+  // Empty cells before first day
+  for(let i=0;i<firstDay;i++){
+    html+=`<div style="min-height:90px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px;background:var(--light);opacity:.4"></div>`;
+  }
+  for(let day=1;day<=daysInMonth;day++){
+    const dateStr=`${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const isToday=dateStr===todayStr;
+    const items=dayMap[day]||[];
+    const daysUntil=Math.ceil((new Date(dateStr)-today)/(1000*60*60*24));
+    let cellBg=isToday?'var(--accent-light)':'var(--card)';
+    let cellBorder=isToday?'1.5px solid var(--accent)':'1px solid var(--border)';
+
+    let dotsHtml='';
+    items.forEach(s=>{
+      let color=s.paid?'#10b981':(daysUntil<=3&&daysUntil>=0?'#f59e0b':'#f43f5e');
+      if(daysUntil<0&&!s.paid) color='#dc2626';
+      dotsHtml+=`<div style="margin-bottom:3px;padding:2px 5px;border-radius:4px;font-size:10px;font-weight:600;background:${color}20;color:${color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">${s.description}</div>`;
+    });
+
+    html+=`<div style="min-height:90px;border-right:${cellBorder};border-bottom:${cellBorder};padding:6px;background:${cellBg};cursor:pointer;transition:background .1s" onclick="showCalDay(${day})" onmouseover="this.style.filter='brightness(.97)'" onmouseout="this.style.filter=''">
+      <div style="font-size:13px;font-weight:${isToday?'700':'500'};color:${isToday?'var(--accent)':'var(--text)'};margin-bottom:4px">${day}</div>
+      ${dotsHtml}
+    </div>`;
+  }
+  // Fill remaining cells
+  const totalCells=firstDay+daysInMonth;
+  const remaining=(7-totalCells%7)%7;
+  for(let i=0;i<remaining;i++){
+    html+=`<div style="min-height:90px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px;background:var(--light);opacity:.4"></div>`;
+  }
+  grid.innerHTML=html;
+
+  // Upcoming list (next 30 days)
+  const upcoming=[];
+  db.scheduled.forEach(s=>{
+    for(let mo=0;mo<=1;mo++){
+      let [cy,cm]=[y,m+mo]; if(cm>12){cm-=12;cy++;}
+      const ym=cy+'-'+String(cm).padStart(2,'0');
+      const maxD=new Date(cy,cm,0).getDate();
+      const d=Math.min(s.dueDay,maxD);
+      const dateStr=`${cy}-${String(cm).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const diff=Math.ceil((new Date(dateStr+' 00:00:00')-today)/(1000*60*60*24));
+      if(diff>=0&&diff<=30&&!db.paid[ym+':'+s.id]){
+        upcoming.push({...s,dateStr,diff,ym});
+      }
+    }
+  });
+  upcoming.sort((a,b)=>a.diff-b.diff);
+
+  // Notification badge
+  const urgent=upcoming.filter(s=>s.diff<=3);
+  const dot=document.getElementById('cal-nav-dot');
+  const badge=document.getElementById('cal-notif-badge');
+  if(urgent.length){
+    dot.style.display='';
+    badge.style.display='';
+    badge.textContent=`⚠️ ${urgent.length} vencimento${urgent.length>1?'s':''} em até 3 dias`;
+  } else {
+    dot.style.display='none';
+    badge.style.display='none';
+  }
+
+  const ul=document.getElementById('cal-upcoming-list');
+  if(!upcoming.length){
+    ul.innerHTML='<div class="empty"><div class="empty-icon">✅</div><p>Nenhum vencimento nos próximos 30 dias</p></div>';
+    return;
+  }
+  ul.innerHTML=upcoming.map(s=>{
+    const color=s.diff===0?'#dc2626':s.diff<=3?'#f59e0b':'var(--expense)';
+    const label=s.diff===0?'Vence hoje!':s.diff===1?'Amanhã':`Em ${s.diff} dias`;
+    return`<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:7px">
+      <div style="width:42px;height:42px;border-radius:9px;background:${s.diff<=3?'#fef3c7':'var(--light)'};display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0">
+        <span style="font-size:14px;font-weight:700;color:${color};line-height:1">${String(new Date(s.dateStr+'T12:00:00').getDate()).padStart(2,'0')}</span>
+        <span style="font-size:9px;color:var(--muted2);text-transform:uppercase">${SHORT_MONTHS[new Date(s.dateStr+'T12:00:00').getMonth()]}</span>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600">${s.description}</div>
+        <div style="font-size:11px;color:var(--muted2)">${s.category}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:14px;font-weight:700;color:var(--expense)">${fmt(s.amount)}</div>
+        <div style="font-size:11px;font-weight:600;color:${color}">${label}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Auto check notifications on load
+  checkAndNotify();
+}
+
+let calDayEditingId = null;
+
+function showCalDay(day){
+  const [y,m]=calMonth.split('-');
+  const ym=calMonth;
+  const dateStr=`${y}-${String(parseInt(m)).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  const today=new Date().toISOString().slice(0,10);
+  const isToday=dateStr===today;
+  const isPast=dateStr<today;
+  const items=db.scheduled.filter(s=>s.dueDay===day);
+
+  document.getElementById('cal-day-title').textContent=
+    `${String(day).padStart(2,'0')} de ${MONTHS[parseInt(m)-1]} ${y}${isToday?' — Hoje':''}`;
+  document.getElementById('cal-day-edit-form').style.display='none';
+  calDayEditingId=null;
+
+  renderCalDayBody(items, ym, isPast);
+  document.getElementById('cal-day-overlay').classList.add('open');
+}
+
+function renderCalDayBody(items, ym, isPast){
+  const body=document.getElementById('cal-day-body');
+  if(!items.length){
+    body.innerHTML='<div class="empty"><p>Nenhum agendamento neste dia.</p></div>';
+    return;
+  }
+  const today=new Date();
+  body.innerHTML=items.map(s=>{
+    const paid=!!db.paid[ym+':'+s.id];
+    const [y,m]=ym.split('-');
+    const maxD=new Date(+y,+m,0).getDate();
+    const dStr=`${y}-${m}-${String(Math.min(s.dueDay,maxD)).padStart(2,'0')}`;
+    const daysUntil=Math.ceil((new Date(dStr+' 00:00:00')-today)/(1000*60*60*24));
+    const isLate=daysUntil<0&&!paid;
+    const isSoon=daysUntil>=0&&daysUntil<=3&&!paid;
+
+    let statusColor=paid?'#10b981':isLate?'#dc2626':isSoon?'#f59e0b':'#6b7280';
+    let statusLabel=paid?'✓ Pago':isLate?'Vencido':isSoon?`Vence em ${daysUntil===0?'hoje':daysUntil+' dia(s)'}`:('Dia '+s.dueDay);
+    let statusBg=paid?'#d1fae5':isLate?'#fee2e2':isSoon?'#fef3c7':'var(--light)';
+
+    return`<div id="cal-item-${s.id}" style="border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:10px;background:var(--card)">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+            <span style="font-size:14px;font-weight:700;color:var(--text)">${s.description}</span>
+            <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:${statusBg};color:${statusColor}">${statusLabel}</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted2);margin-bottom:8px">${s.category} · Vence dia ${s.dueDay}</div>
+          <div style="font-size:18px;font-weight:700;color:var(--expense);margin-bottom:10px">${fmt(s.amount)}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${paid
+              ? `<button class="btn btn-outline btn-xs" onclick="calUnmarkPaid('${s.id}','${ym}')">↩ Desfazer pagamento</button>`
+              : `<button class="btn btn-primary btn-xs" onclick="calMarkPaid('${s.id}','${ym}')">✓ Marcar como pago</button>`
+            }
+            <button class="btn btn-outline btn-xs" onclick="openCalEdit('${s.id}')">✏️ Editar</button>
+            <button class="btn btn-xs" style="background:#fee2e2;color:#dc2626;border:1px solid #fecaca" onclick="calDeleteSched('${s.id}','${ym}')">🗑 Excluir</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function calMarkPaid(id, ym){
+  const s=db.scheduled.find(x=>x.id===id); if(!s) return;
+  const key=ym+':'+id;
+  db.paid[key]=true;
+  const [y,m]=ym.split('-');
+  const maxDay=new Date(+y,+m,0).getDate();
+  const day=String(Math.min(s.dueDay,maxDay)).padStart(2,'0');
+  db.transactions.unshift({id:Date.now()+'',type:'expense',description:s.description,amount:s.amount,category:s.category,date:`${y}-${m}-${day}`,month:ym,account:'Conta corrente',note:'(agendamento)'});
+  saveDB(); toast('Pagamento registrado!');
+  renderCalDayBody(db.scheduled.filter(x=>x.dueDay===s.dueDay), ym, false);
+  renderCalendar();
+}
+
+function calUnmarkPaid(id, ym){
+  const s=db.scheduled.find(x=>x.id===id); if(!s) return;
+  delete db.paid[ym+':'+id];
+  db.transactions=db.transactions.filter(t=>!(t.month===ym&&t.description===s.description&&t.note==='(agendamento)'&&t.amount===s.amount));
+  saveDB(); toast('Pagamento desmarcado.');
+  renderCalDayBody(db.scheduled.filter(x=>x.dueDay===s.dueDay), ym, false);
+  renderCalendar();
+}
+
+function calDeleteSched(id, ym){
+  if(!confirm('Excluir este agendamento permanentemente?')) return;
+  db.scheduled=db.scheduled.filter(s=>s.id!==id);
+  Object.keys(db.paid).filter(k=>k.endsWith(':'+id)).forEach(k=>delete db.paid[k]);
+  saveDB(); toast('Agendamento excluído.');
+  const [,m]=ym.split('-');
+  const day=parseInt(m); // placeholder — we re-render by dueDay
+  const remaining=db.scheduled; // all remaining
+  renderCalDayBody(remaining.filter(s=>db.paid[ym+':'+s.id]!==undefined||true), ym, false);
+  closeCalDay();
+  renderCalendar();
+}
+
+function openCalEdit(id){
+  const s=db.scheduled.find(x=>x.id===id); if(!s) return;
+  calDayEditingId=id;
+  document.getElementById('cal-edit-form-title').textContent=`Editar: ${s.description}`;
+  document.getElementById('cal-edit-desc').value=s.description;
+  document.getElementById('cal-edit-val').value=s.amount;
+  document.getElementById('cal-edit-day').value=s.dueDay;
+  document.getElementById('cal-edit-cat').value=s.category;
+  document.getElementById('cal-day-edit-form').style.display='block';
+  document.getElementById('cal-day-edit-form').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function cancelCalEdit(){
+  calDayEditingId=null;
+  document.getElementById('cal-day-edit-form').style.display='none';
+}
+
+async function saveCalEdit(){
+  if(!calDayEditingId) return;
+  const desc=document.getElementById('cal-edit-desc').value.trim();
+  const val=parseFloat(document.getElementById('cal-edit-val').value);
+  const day=parseInt(document.getElementById('cal-edit-day').value);
+  const cat=document.getElementById('cal-edit-cat').value;
+  if(!desc||!val||val<=0||!day||day<1||day>31){toast('Preencha todos os campos corretamente.');return;}
+  const idx=db.scheduled.findIndex(s=>s.id===calDayEditingId);
+  if(idx>=0) db.scheduled[idx]={...db.scheduled[idx],description:desc,amount:val,dueDay:day,category:cat};
+  await saveDB();
+  toast('Agendamento atualizado!');
+  cancelCalEdit();
+  const ym=calMonth;
+  renderCalDayBody(db.scheduled.filter(s=>s.dueDay===day), ym, false);
+  renderCalendar();
+}
+
+function closeCalDay(){
+  document.getElementById('cal-day-overlay').classList.remove('open');
+  calDayEditingId=null;
+  document.getElementById('cal-day-edit-form').style.display='none';
+}
+
+// ─ Notifications ─
+const EMAILJS_PUBLIC_KEY  = 'FshJ_n11-o5k-ggAy';
+const EMAILJS_SERVICE_ID  = 'service_xdv7u69';
+const EMAILJS_TEMPLATE_ID = 'template_aedlr0m';
+const NOTIFY_EMAIL        = 'gsitalohen@gmail.com';
+const NOTIF_STORAGE_KEY   = 'finNotified';
+
+function checkAndNotify(){
+  if(!EMAILJS_PUBLIC_KEY||!EMAILJS_SERVICE_ID||!EMAILJS_TEMPLATE_ID) return;
+  const prefs=getNotifPrefs();
+  if(!prefs.email) return;
+  const today=new Date();
+  const notified=JSON.parse(localStorage.getItem(NOTIF_STORAGE_KEY)||'{}');
+
+  db.scheduled.forEach(s=>{
+    for(let mo=0;mo<=1;mo++){
+      const d=new Date(today.getFullYear(),today.getMonth()+mo,s.dueDay);
+      const dateStr=d.toISOString().slice(0,10);
+      const diff=Math.ceil((d-today)/(1000*60*60*24));
+      const ym=dateStr.slice(0,7);
+      const paid=db.paid[ym+':'+s.id];
+      if(paid) continue;
+      if(!prefs.days.includes(diff)) continue;
+      const notifKey=`${s.id}_${dateStr}_${diff}`;
+      if(notified[notifKey]) continue;
+      sendNotificationEmail(s, dateStr, diff, prefs.email);
+      notified[notifKey]=Date.now();
+    }
+  });
+  localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(notified));
+}
+
+function sendNotificationEmail(sched, dateStr, daysLeft, toEmail){
+  if(!window.emailjs) { console.warn('EmailJS não carregado ainda.'); return; }
+  const email=toEmail||getNotifPrefs().email||NOTIFY_EMAIL;
+  const daysLabel = daysLeft===0 ? 'HOJE' : daysLeft===1 ? 'amanhã' : `em ${daysLeft} dias`;
+  const params = {
+    to_email:        email,
+    boleto_nome:     sched.description,
+    valor:           fmt(sched.amount),
+    data_vencimento: new Date(dateStr+'T12:00:00').toLocaleDateString('pt-BR'),
+    dias_restantes:  String(daysLeft),
+    dias_label:      daysLabel,
+    categoria:       sched.category,
+    reply_to:        email
+  };
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params)
+    .then(()=>{ console.log('✉️ Notificação enviada:', sched.description); toast('📧 E-mail enviado: '+sched.description); })
+    .catch(e=>{ console.error('Erro ao enviar e-mail:', e); });
+}
+
 // ─ Keyboard ─
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){closeTxModal();closeSchedModal();closeConfirm();closeBoletoScanner();closeSettings();}
+  if(e.key==='Escape'){closeTxModal();closeSchedModal();closeConfirm();closeBoletoScanner();closeSettings();closeCalDay();}
   if(e.key==='n'&&!e.ctrlKey&&!e.metaKey&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA') openTxModal();
   if(e.key==='b'&&!e.ctrlKey&&!e.metaKey&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA') openBoletoScanner();
 });
@@ -1358,6 +1847,7 @@ function startDBListener(uid){
 onAuthStateChanged(auth,(user)=>{
   if(user){
     currentUser=user;
+    window._currentUserEmail=user.email;
     document.getElementById('user-email-label').textContent=user.email;
     hideAuthScreen();
     startDBListener(user.uid);
@@ -1373,5 +1863,14 @@ window._firebaseSaveDB = saveDB;
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+window.addEventListener('load', function(){
+  if(window.emailjs) {
+    emailjs.init({ publicKey: 'FshJ_n11-o5k-ggAy' });
+    console.log('EmailJS inicializado.');
+  }
+});
+</script>
 </body>
 </html>
